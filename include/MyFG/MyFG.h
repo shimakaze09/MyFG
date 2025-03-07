@@ -6,4 +6,5 @@
 
 #include "Compiler.h"
 #include "FrameGraph.h"
-#include "Pass.h"
+#include "PassNode.h"
+#include "ResourceNode.h"

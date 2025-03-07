@@ -8,23 +8,23 @@
 #include <vector>
 
 namespace My::FG {
-class Pass {
+class PassNode {
  public:
-  Pass(std::string name, std::vector<std::string> inputs,
-       std::vector<std::string> outputs)
+  PassNode(std::string name, std::vector<size_t> inputs,
+           std::vector<size_t> outputs)
       : name{std::move(name)},
         inputs{std::move(inputs)},
         outputs{std::move(outputs)} {}
 
   const std::string& Name() const noexcept { return name; }
 
-  const std::vector<std::string>& Inputs() const noexcept { return inputs; }
+  const std::vector<size_t>& Inputs() const noexcept { return inputs; }
 
-  const std::vector<std::string>& Outputs() const noexcept { return outputs; }
+  const std::vector<size_t>& Outputs() const noexcept { return outputs; }
 
  private:
   std::string name;
-  std::vector<std::string> inputs;
-  std::vector<std::string> outputs;
+  std::vector<size_t> inputs;
+  std::vector<size_t> outputs;
 };
 }  // namespace My::FG
