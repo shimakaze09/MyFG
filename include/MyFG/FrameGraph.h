@@ -24,12 +24,21 @@ class FrameGraph {
     return compileResult;
   }
 
-  const std::map<std::string, Resource>& GetImports() const noexcept {
+  const std::map<std::string, ResourceImportView>& GetImports() const noexcept {
     return imports;
   }
 
-  void Import(std::string name, Resource resource) {
-    imports.emplace(std::move(name), resource);
+  const ResourceRawDesc& GetResourceRawDesc(
+      const std::string& name) const noexcept {
+    return rsrcRawDescs.find(name)->second;
+  }
+
+  void ImportResource(Named<ResourceImportView> rsrc) {
+    imports.emplace(std::move(rsrc.name), rsrc.DeNamed());
+  }
+
+  void AddResource(Named<ResourceRawDesc> rsrc) {
+    rsrcRawDescs[rsrc.name] = rsrc.DeNamed();
   }
 
   void AddPass(Pass pass) { passes.emplace_back(std::move(pass)); }
@@ -44,6 +53,7 @@ class FrameGraph {
   ResourceMngr* rsrcMngr;
   CompileResult compileResult;
   std::vector<Pass> passes;
-  std::map<std::string, Resource> imports;
+  std::map<std::string, ResourceImportView> imports;
+  std::map<std::string, ResourceRawDesc> rsrcRawDescs;
 };
 }  // namespace My::FG
