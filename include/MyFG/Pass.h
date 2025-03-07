@@ -4,42 +4,27 @@
 
 #pragma once
 
-#include <functional>
-#include <map>
+#include <string>
 #include <vector>
-
-#include "Resource.h"
 
 namespace My::FG {
 class Pass {
  public:
-  Pass(std::vector<Named<ResourceImplDesc>> inputs,
-       std::vector<Named<ResourceImplDesc>> outputs,
-       std::function<void(const std::map<std::string, Resource>&)> func,
-       std::string name)
-      : inputs{std::move(inputs)},
-        outputs{std::move(outputs)},
-        func{std::move(func)},
-        name{std::move(name)} {}
-
-  void Execute(const std::map<std::string, Resource>& resources) const {
-    func(resources);
-  }
+  Pass(std::string name, std::vector<std::string> inputs,
+       std::vector<std::string> outputs)
+      : name{std::move(name)},
+        inputs{std::move(inputs)},
+        outputs{std::move(outputs)} {}
 
   const std::string& Name() const noexcept { return name; }
 
-  const std::vector<Named<ResourceImplDesc>>& Inputs() const noexcept {
-    return inputs;
-  }
+  const std::vector<std::string>& Inputs() const noexcept { return inputs; }
 
-  const std::vector<Named<ResourceImplDesc>>& Outputs() const noexcept {
-    return outputs;
-  }
+  const std::vector<std::string>& Outputs() const noexcept { return outputs; }
 
  private:
-  std::vector<Named<ResourceImplDesc>> inputs;
-  std::vector<Named<ResourceImplDesc>> outputs;
-  std::function<void(const std::map<std::string, Resource>&)> func;
   std::string name;
+  std::vector<std::string> inputs;
+  std::vector<std::string> outputs;
 };
 }  // namespace My::FG
