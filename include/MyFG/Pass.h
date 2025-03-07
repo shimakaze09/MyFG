@@ -14,14 +14,14 @@ namespace My::FG {
 class Pass {
  public:
   Pass(std::vector<ResourceDecs> inputs, std::vector<ResourceDecs> outputs,
-       std::function<void(const std::map<std::string, Resource>&)> func,
+       std::function<void(const std::map<std::string, const Resource*>&)> func,
        std::string name)
       : inputs{std::move(inputs)},
         outputs{std::move(outputs)},
         func{std::move(func)},
         name{std::move(name)} {}
 
-  void Execute(const std::map<std::string, Resource>& resources) const {
+  void Execute(const std::map<std::string, const Resource*>& resources) const {
     func(resources);
   }
 
@@ -34,7 +34,7 @@ class Pass {
  private:
   std::vector<ResourceDecs> inputs;
   std::vector<ResourceDecs> outputs;
-  std::function<void(const std::map<std::string, Resource>&)> func;
+  std::function<void(const std::map<std::string, const Resource*>&)> func;
   std::string name;
 };
 }  // namespace My::FG

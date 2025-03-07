@@ -15,7 +15,7 @@ class ResourceMngr {
   Resource Request(const void* type, size_t state);
 
   void Recycle(const Resource& resource);
-  virtual void Transition(Resource& resource, size_t state) = 0;
+  virtual void Transition(Resource* resource, size_t state) = 0;
 
  protected:
   virtual void* Create(const void* type, size_t state) const = 0;
