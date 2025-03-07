@@ -6,20 +6,94 @@
 
 #include <iostream>
 
-using namespace My;
 using namespace std;
+using namespace My;
+
+struct RsrcType {
+  size_t size;
+
+  bool operator==(const RsrcType& rhs) const noexcept {
+    return size == rhs.size;
+  }
+};
+
+namespace std {
+template <>
+struct hash<RsrcType> {
+  bool operator()(const RsrcType& type) const noexcept {
+    return hash<size_t>{}(type.size);
+  }
+};
+}  // namespace std
+
+struct Resource {
+  float* buffer;
+};
 
 class ResourceMngr {
  public:
-  void Construct(const FG::FrameGraph& fg, size_t rsrcNodeIdx) {
-    cout << "[Construct] " << fg.GetResourceNodes().at(rsrcNodeIdx).Name()
-         << endl;
+  ~ResourceMngr() {
+    for (const auto& [type, rsrcs] : pool) {
+      for (auto rsrc : rsrcs)
+        delete[] rsrc.buffer;
+    }
   }
 
-  void Destruct(const FG::FrameGraph& fg, size_t rsrcNodeIdx) {
-    cout << "[Destruct] " << fg.GetResourceNodes().at(rsrcNodeIdx).Name()
-         << endl;
+  void Construct(const string& name, size_t rsrcNodeIdx) {
+    Resource rsrc;
+
+    if (IsImported(rsrcNodeIdx)) {
+      rsrc = importeds[rsrcNodeIdx];
+      cout << "[Construct] Import | " << name << " @" << rsrc.buffer << endl;
+    } else {
+      auto type = temporals[rsrcNodeIdx];
+      auto& typefrees = pool[type];
+      if (typefrees.empty()) {
+        rsrc.buffer = new float[type.size];
+        cout << "[Construct] Create | " << name << " @" << rsrc.buffer << endl;
+      } else {
+        rsrc = typefrees.back();
+        typefrees.pop_back();
+        cout << "[Construct] Init | " << name << " @" << rsrc.buffer << endl;
+      }
+    }
+    actives[rsrcNodeIdx] = rsrc;
   }
+
+  void Destruct(const string& name, size_t rsrcNodeIdx) {
+    auto rsrc = actives[rsrcNodeIdx];
+    if (!IsImported(rsrcNodeIdx)) {
+      pool[temporals[rsrcNodeIdx]].push_back(actives[rsrcNodeIdx]);
+      cout << "[Destruct] Recycle | " << name << " @" << rsrc.buffer << endl;
+    } else
+      cout << "[Destruct] Import | " << name << " @" << rsrc.buffer << endl;
+
+    actives.erase(rsrcNodeIdx);
+  }
+
+  ResourceMngr& RegisterImportedRsrc(size_t rsrcNodeIdx, Resource rsrc) {
+    importeds[rsrcNodeIdx] = rsrc;
+    return *this;
+  }
+
+  ResourceMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, RsrcType type) {
+    temporals[rsrcNodeIdx] = type;
+    return *this;
+  }
+
+  bool IsImported(size_t rsrcNodeIdx) const noexcept {
+    return importeds.find(rsrcNodeIdx) != importeds.end();
+  }
+
+ private:
+  // rsrcNodeIdx -> rsrc
+  std::unordered_map<size_t, Resource> importeds;
+  // rsrcNodeIdx -> type
+  std::unordered_map<size_t, RsrcType> temporals;
+  // type -> vector<rsrc>
+  std::unordered_map<RsrcType, std::vector<Resource>> pool;
+  // rsrcNodeIdx -> rsrc
+  std::unordered_map<size_t, Resource> actives;
 };
 
 class Executor {
@@ -32,12 +106,12 @@ class Executor {
       const auto& passinfo = crst.idx2info.find(i)->second;
 
       for (const auto& rsrc : passinfo.constructRsrcs)
-        rsrcMngr.Construct(fg, rsrc);
+        rsrcMngr.Construct(fg.GetResourceNodes().at(rsrc).Name(), rsrc);
 
       cout << "[Execute] " << passnodes[i].Name() << endl;
 
       for (const auto& rsrc : passinfo.destructRsrcs)
-        rsrcMngr.Destruct(fg, rsrc);
+        rsrcMngr.Destruct(fg.GetResourceNodes().at(rsrc).Name(), rsrc);
     }
   }
 };
@@ -55,7 +129,8 @@ int main() {
 
   fg.AddPassNode("Depth pass", {}, {depthbuffer});
   fg.AddPassNode("GBuffer pass", {depthbuffer}, {gbuffer1, gbuffer2, gbuffer3});
-  fg.AddPassNode("Lighting", {gbuffer1, gbuffer2, gbuffer3}, {lightingbuffer});
+  fg.AddPassNode("Lighting", {depthbuffer, gbuffer1, gbuffer2, gbuffer3},
+                 {lightingbuffer});
   fg.AddPassNode("Post", {lightingbuffer}, {finaltarget});
   fg.AddPassNode("Debug View", {gbuffer3}, {debugoutput});
 
@@ -120,6 +195,15 @@ int main() {
   cout << "------------------------[Execute]------------------------" << endl;
 
   ResourceMngr rsrcMngr;
+
+  rsrcMngr.RegisterImportedRsrc(finaltarget, {nullptr})
+      .RegisterTemporalRsrc(depthbuffer, {32})
+      .RegisterTemporalRsrc(gbuffer1, {32})
+      .RegisterTemporalRsrc(gbuffer2, {32})
+      .RegisterTemporalRsrc(gbuffer3, {32})
+      .RegisterTemporalRsrc(debugoutput, {32})
+      .RegisterTemporalRsrc(lightingbuffer, {32});
+
   Executor executor;
   executor.Execute(fg, crst, rsrcMngr);
 
