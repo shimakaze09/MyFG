@@ -1,0 +1,17 @@
+# Binary files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.dds
+
+*.pdf
+
+*.mp4
+
+# Directories
+resources/
+bin/
+lib/
+build/
