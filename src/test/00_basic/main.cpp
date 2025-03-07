@@ -9,9 +9,7 @@
 using namespace My;
 using namespace std;
 
-struct Type : FG::Resource::Type {
-  Type(size_t width, size_t height) : width{width}, height{height} {}
-
+struct Type {
   size_t width;
   size_t height;
 };
