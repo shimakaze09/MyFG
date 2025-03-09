@@ -2,9 +2,9 @@
 // Created by Admin on 7/03/2025.
 //
 
-#include <MyFG/Compiler.h>
+#include <MyFG/core/Compiler.h>
 
-#include <MyFG/ResourceNode.h>
+#include <MyFG/core/ResourceNode.h>
 
 #include <algorithm>
 #include <stack>

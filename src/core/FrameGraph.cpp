@@ -2,7 +2,7 @@
 // Created by Admin on 8/03/2025.
 //
 
-#include <MyFG/FrameGraph.h>
+#include <MyFG/core/FrameGraph.h>
 
 using namespace My;
 
