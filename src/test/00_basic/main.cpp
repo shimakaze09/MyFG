@@ -2,7 +2,7 @@
 // Created by Admin on 7/03/2025.
 //
 
-#include <MyFG/core/core.h>
+#include <MyFG/MyFG.h>
 
 #include <iostream>
 
