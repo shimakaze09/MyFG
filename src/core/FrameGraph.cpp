@@ -77,6 +77,18 @@ size_t FrameGraph::GetMoveNodeIndex(size_t dst, size_t src) const {
   return srcRsrcNodeIdx2moveNodeIdx.find(src)->second;
 }
 
+size_t FrameGraph::GetMoveSourceNodeIndex(size_t dst) const {
+  assert(IsMovedIn(dst));
+  return moveNodes[dstRsrcNodeIdx2moveNodeIdx.find(dst)->second]
+      .GetSourceNodeIndex();
+}
+
+size_t FrameGraph::GetMoveDestinationNodeIndex(size_t src) const {
+  assert(IsMovedOut(src));
+  return moveNodes[srcRsrcNodeIdx2moveNodeIdx.find(src)->second]
+      .GetDestinationNodeIndex();
+}
+
 size_t FrameGraph::RegisterMoveNode(MoveNode node) {
   assert(!IsRegisteredMoveNode(node.GetDestinationNodeIndex(),
                                node.GetSourceNodeIndex()));
@@ -123,8 +135,8 @@ MyGraphviz::Graph FrameGraph::ToGraphvizGraph() const {
       .RegisterGraphNodeAttr("shape", "box");
 
   subgraph_read.RegisterGraphEdgeAttr("color", "#9BBB59");
-  subgraph_write.RegisterGraphEdgeAttr("color", "#B54E4C");
-  subgraph_move.RegisterGraphEdgeAttr("color", "#AC00FF");
+  subgraph_write.RegisterGraphEdgeAttr("color", "#ED1C24");
+  subgraph_move.RegisterGraphEdgeAttr("color", "#F79646");
 
   for (const auto& rsrcNode : resourceNodes) {
     auto rsrcIndex = registry.RegisterNode(rsrcNode.Name());
