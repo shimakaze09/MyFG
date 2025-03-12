@@ -46,6 +46,7 @@ int main() {
   MyFG::FrameGraph fg("test 00 basic");
 
   size_t depthbuffer = fg.RegisterResourceNode("Depth Buffer");
+  size_t depthbuffer2 = fg.RegisterResourceNode("Depth Buffer 2");
   size_t gbuffer1 = fg.RegisterResourceNode("GBuffer1");
   size_t gbuffer2 = fg.RegisterResourceNode("GBuffer2");
   size_t gbuffer3 = fg.RegisterResourceNode("GBuffer3");
@@ -54,8 +55,9 @@ int main() {
   size_t debugoutput = fg.RegisterResourceNode("Debug Output");
 
   fg.RegisterPassNode("Depth pass", {}, {depthbuffer});
-  fg.RegisterPassNode("GBuffer pass", {depthbuffer},
-                      {gbuffer1, gbuffer2, gbuffer3});
+  fg.RegisterMoveNode(depthbuffer2, depthbuffer);
+  fg.RegisterPassNode("GBuffer pass", {},
+                      {depthbuffer2, gbuffer1, gbuffer2, gbuffer3});
   fg.RegisterPassNode("Lighting", {gbuffer1, gbuffer2, gbuffer3},
                       {lightingbuffer});
   fg.RegisterPassNode("Post", {lightingbuffer}, {finaltarget});
@@ -91,6 +93,12 @@ int main() {
       for (auto reader : info.readers)
         cout << "    * " << fg.GetPassNodes().at(reader).Name() << endl;
     }
+
+    if (info.inRsrcNodeIdx != static_cast<size_t>(-1))
+      cout << "  - in resource node index : " << info.inRsrcNodeIdx << endl;
+
+    if (info.outRsrcNodeIdx != static_cast<size_t>(-1))
+      cout << "  - out resource node index : " << info.outRsrcNodeIdx << endl;
 
     cout << "  - lifetime: "
          << fg.GetPassNodes().at(crst.sortedPasses[info.first]).Name() << " - "

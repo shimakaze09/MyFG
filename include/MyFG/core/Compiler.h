@@ -19,6 +19,8 @@ class Compiler {
 
       std::vector<size_t> readers;
       size_t writer{static_cast<size_t>(-1)};
+      size_t inRsrcNodeIdx{static_cast<size_t>(-1)};
+      size_t outRsrcNodeIdx{static_cast<size_t>(-1)};
     };
 
     struct PassInfo {
@@ -41,4 +43,4 @@ class Compiler {
 
   std::tuple<bool, Result> Compile(const FrameGraph& fg);
 };
-}  // namespace My::FG
+}  // namespace My::MyFG
