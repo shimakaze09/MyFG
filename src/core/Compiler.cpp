@@ -7,6 +7,7 @@
 #include <MyFG/core/ResourceNode.h>
 
 #include <algorithm>
+#include <cassert>
 #include <stack>
 
 using namespace My;
@@ -71,15 +72,15 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
   for (const auto& moveNode : fg.GetMoveNodes()) {
     auto src = moveNode.GetSourceNodeIndex();
     auto dst = moveNode.GetDestinationNodeIndex();
-    if (rst.moves.find(src) != rst.moves.end())
+    if (rst.moves_src2dst.find(src) != rst.moves_src2dst.end())
       return fail;  // move out more than once
-    rst.moves.emplace(src, dst);
+    rst.moves_src2dst.emplace(src, dst);
   }
 
   // pruning move
   std::set<size_t> deleteMoves;
-  auto iter = rst.moves.begin();
-  while (iter != rst.moves.end()) {
+  auto iter = rst.moves_src2dst.begin();
+  while (iter != rst.moves_src2dst.end()) {
     auto& [src, dst] = *iter;
     if (deleteMoves.find(src) != deleteMoves.end()) {
       ++iter;
@@ -87,16 +88,22 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
     }
 
     const auto& info = rst.rsrc2info.find(dst)->second;
-    auto next = rst.moves.find(dst);
+    auto next = rst.moves_src2dst.find(dst);
     if (info.writer == static_cast<size_t>(-1) && info.readers.empty() &&
-        next != rst.moves.end()) {
+        next != rst.moves_src2dst.end()) {
       dst = next->second;
       deleteMoves.insert(dst);
     } else
       ++iter;
   }
   for (auto idx : deleteMoves)
-    rst.moves.erase(idx);
+    rst.moves_src2dst.erase(idx);
+
+  // move_src2dst -> move_dst2src
+  for (const auto& [src, dst] : rst.moves_src2dst) {
+    auto [iter, success] = rst.moves_dst2src.emplace(dst, src);
+    assert(success);
+  }
 
   // init rst.passgraph.adjList
   rst.passgraph.adjList.reserve(passes.size());
@@ -116,7 +123,7 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
   }
 
   // move order
-  for (const auto& [src, dst] : rst.moves) {
+  for (const auto& [src, dst] : rst.moves_src2dst) {
     const auto& info_dst = rst.rsrc2info.find(dst)->second;
     const auto& info_src = rst.rsrc2info.find(src)->second;
     if (info_dst.writer != static_cast<size_t>(-1)) {
@@ -136,9 +143,9 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
         rst.passgraph.adjList[info_src.writer].insert(info_dst.readers.begin(),
                                                       info_dst.readers.end());
       }
-      // else [do nothing]
+      // else [[do nothing]];
     }
-    // else [do nothing]
+    // else [[do nothing]];
   }
 
   // sortedPasses : order -> index
@@ -150,28 +157,40 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
   for (size_t i = 0; i < sortedPasses.size(); i++)
     index2order[sortedPasses[i]] = i;
 
+  // set resource's first last
   for (auto& [rsrcNodeIdx, info] : rst.rsrc2info) {
-    if (info.writer != static_cast<size_t>(-1))
+    if (info.writer != static_cast<size_t>(-1)) {
       info.first = index2order[info.writer];
-    else {
-      size_t first = rst.rsrc2info.size();
+      info.last = info.first;
+      for (const auto& reader : info.readers)
+        info.last = max(info.last, index2order[reader]);
+    } else if (!info.readers.empty()) {
+      size_t first = static_cast<size_t>(-1);  // max size_t
       for (const auto& reader : info.readers)
         first = min(first, index2order[reader]);
       info.first = first;
     }
+    //else [[do nothing]]; // info.first = static_cast<size_t>(-1)
 
-    if (!info.readers.empty()) {
-      size_t last = 0;
-      for (const auto& reader : info.readers)
-        last = max(last, index2order[reader]);
+    info.last = info.first;
+    for (const auto& reader : info.readers)
+      info.last = max(info.last, index2order[reader]);
 
-      info.last = last;
-    } else
-      info.last = info.first;
+    assert(info.first == static_cast<size_t>(-1) ||
+           info.last != static_cast<size_t>(-1));
 
-    rst.idx2info[sortedPasses[info.first]].constructRsrcs.push_back(
-        rsrcNodeIdx);
-    rst.idx2info[sortedPasses[info.last]].destructRsrcs.push_back(rsrcNodeIdx);
+    size_t firstPassIdx = info.first != static_cast<size_t>(-1)
+                              ? sortedPasses[info.first]
+                              : static_cast<size_t>(-1);
+    size_t lastPassIdx = info.last != static_cast<size_t>(-1)
+                             ? sortedPasses[info.last]
+                             : static_cast<size_t>(-1);
+    if (rst.moves_dst2src.find(rsrcNodeIdx) == rst.moves_dst2src.end())
+      rst.idx2info[firstPassIdx].constructRsrcs.push_back(rsrcNodeIdx);
+    if (rst.moves_src2dst.find(rsrcNodeIdx) != rst.moves_src2dst.end())
+      rst.idx2info[lastPassIdx].moveRsrcs.push_back(rsrcNodeIdx);
+    else
+      rst.idx2info[lastPassIdx].destructRsrcs.push_back(rsrcNodeIdx);
   }
 
   rst.sortedPasses = move(sortedPasses);
