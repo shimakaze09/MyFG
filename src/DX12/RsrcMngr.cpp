@@ -21,10 +21,18 @@ RsrcMngr::~RsrcMngr() {
   delete csuDynamicDH;
 }
 
+void RsrcMngr::Init(MyDX12::GCmdList uGCmdList, MyDX12::Device uDevice) {
+  this->uGCmdList = uGCmdList;
+  this->uDevice = uDevice;
+  csuDynamicDH = new MyDX12::DynamicSuballocMngr{
+      *MyDX12::DescriptorHeapMngr::Instance().GetCSUGpuDH(), 256,
+      "RsrcMngr::csuDynamicDH"};
+}
+
 void RsrcMngr::NewFrame() {
   importeds.clear();
   temporals.clear();
-  passNodeIdx2rsrcs.clear();
+  passNodeIdx2rsrcMap.clear();
   actives.clear();
 
   for (const auto& idx : csuDHused)
@@ -114,8 +122,8 @@ void RsrcMngr::DHReserve() {
   };
 
   std::unordered_map<size_t, DHRecord> rsrc2record;
-  for (auto [passNodeIdx, rsrcs] : passNodeIdx2rsrcs) {
-    for (const auto& [rsrcNodeIdx, state, desc] : rsrcs) {
+  for (auto [passNodeIdx, rsrcs] : passNodeIdx2rsrcMap) {
+    for (const auto& [rsrcNodeIdx, state_desc] : rsrcs) {
       auto& record = rsrc2record[rsrcNodeIdx];
       std::visit(
           [&](const auto& desc) {
@@ -187,9 +195,10 @@ void RsrcMngr::DHReserve() {
               record.null_dsv = true;
               numDSV++;
             } else
-              static_assert(always_false_v<T>, "non-exhaustive visitor!");
+              static_assert(detail::always_false_v<T>,
+                            "non-exhaustive visitor!");
           },
-          desc);
+          get<RsrcImplDesc>(state_desc));
     }
   }
 
@@ -201,10 +210,9 @@ void RsrcMngr::DHReserve() {
 void RsrcMngr::Construct(size_t rsrcNodeIdx) {
   SRsrcView view;
 
-  if (IsImported(rsrcNodeIdx)) {
-    view = importeds[rsrcNodeIdx];
-    //cout << "[Construct] Import | " << name << " @" << rsrc.buffer << endl;
-  } else {
+  if (IsImported(rsrcNodeIdx))
+    view = importeds.find(rsrcNodeIdx)->second;
+  else {
     const auto& type = temporals[rsrcNodeIdx];
     auto& typefrees = pool[type];
     if (typefrees.empty()) {
@@ -216,11 +224,9 @@ void RsrcMngr::Construct(size_t rsrcNodeIdx) {
           IID_PPV_ARGS(ptr.GetAddressOf())));
       rsrcKeeper.push_back(ptr);
       view.pRsrc = ptr.Get();
-      //cout << "[Construct] Create | " << name << " @" << rsrc.buffer << endl;
     } else {
       view = typefrees.back();
       typefrees.pop_back();
-      //cout << "[Construct] Init | " << name << " @" << rsrc.buffer << endl;
     }
   }
   actives[rsrcNodeIdx] = view;
@@ -228,17 +234,20 @@ void RsrcMngr::Construct(size_t rsrcNodeIdx) {
 
 void RsrcMngr::Destruct(size_t rsrcNodeIdx) {
   auto view = actives[rsrcNodeIdx];
-  if (!IsImported(rsrcNodeIdx)) {
+  if (!IsImported(rsrcNodeIdx))
     pool[temporals[rsrcNodeIdx]].push_back(view);
-    //cout << "[Destruct] Recycle | " << name << " @" << rsrc.buffer << endl;
-  } else {
+  else {
     auto orig_state = importeds[rsrcNodeIdx].state;
     if (view.state != orig_state) {
       uGCmdList.ResourceBarrier(view.pRsrc, view.state, orig_state);
     }
-    //cout << "[Destruct] Import | " << name << " @" << rsrc.buffer << endl;
   }
   actives.erase(rsrcNodeIdx);
+}
+
+void RsrcMngr::Move(size_t dstRsrcNodeIdx, size_t srcRsrcNodeIdx) {
+  actives[dstRsrcNodeIdx] = actives[srcRsrcNodeIdx];
+  actives.erase(srcRsrcNodeIdx);
 }
 
 RsrcMngr& RsrcMngr::RegisterRsrcHandle(size_t rsrcNodeIdx, RsrcImplDesc desc,
@@ -286,7 +295,7 @@ RsrcMngr& RsrcMngr::RegisterRsrcHandle(size_t rsrcNodeIdx, RsrcImplDesc desc,
           assert(gpuHandle.ptr == 0);
           handles.null_info_dsv = {cpuHandle, true};
         } else
-          static_assert(always_false_v<T>, "non-exhaustive visitor!");
+          static_assert(detail::always_false_v<T>, "non-exhaustive visitor!");
       },
       desc);
   return *this;
@@ -314,7 +323,9 @@ RsrcMngr& RsrcMngr::RegisterRsrcTable(
                                             D3D12_SHADER_RESOURCE_VIEW_DESC>) {
             handles.desc2info_srv[desc].cpuHandle = cpuHandle;
             handles.desc2info_srv[desc].gpuHandle = gpuHandle;
-          } else if constexpr (std::is_same_v<T, RsrcImplDesc_SRV_NULL>) {
+          }
+          // SRV null
+          else if constexpr (std::is_same_v<T, RsrcImplDesc_SRV_NULL>) {
             handles.null_info_srv.cpuHandle = cpuHandle;
             handles.null_info_srv.gpuHandle = gpuHandle;
           }
@@ -323,7 +334,9 @@ RsrcMngr& RsrcMngr::RegisterRsrcTable(
                                             D3D12_UNORDERED_ACCESS_VIEW_DESC>) {
             handles.desc2info_uav[desc].cpuHandle = cpuHandle;
             handles.desc2info_uav[desc].gpuHandle = gpuHandle;
-          } else if constexpr (std::is_same_v<T, RsrcImplDesc_UAV_NULL>) {
+          }
+          // UAV null
+          else if constexpr (std::is_same_v<T, RsrcImplDesc_UAV_NULL>) {
             handles.null_info_uav.cpuHandle = cpuHandle;
             handles.null_info_uav.gpuHandle = gpuHandle;
           } else
@@ -335,8 +348,8 @@ RsrcMngr& RsrcMngr::RegisterRsrcTable(
 }
 
 void RsrcMngr::AllocateHandle() {
-  for (const auto& [passNodeIdx, rsrcs] : passNodeIdx2rsrcs) {
-    for (const auto& [rsrcNodeIdx, state, desc] : rsrcs) {
+  for (const auto& [passNodeIdx, rsrcs] : passNodeIdx2rsrcMap) {
+    for (const auto& [rsrcNodeIdx, state_desc] : rsrcs) {
       auto& handles = handleMap[rsrcNodeIdx];
       std::visit(
           [&](const auto& desc) {
@@ -438,17 +451,19 @@ void RsrcMngr::AllocateHandle() {
               else
                 handles.null_info_dsv = {dsvDH.GetCpuHandle(idx), false};
             } else
-              static_assert(always_false_v<T>, "non-exhaustive visitor!");
+              static_assert(detail::always_false_v<T>,
+                            "non-exhaustive visitor!");
           },
-          desc);
+          get<RsrcImplDesc>(state_desc));
     }
   }
 }
 
 PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
   PassRsrcs passRsrc;
-  const auto& rsrcStates = passNodeIdx2rsrcs[passNodeIdx];
-  for (const auto& [rsrcNodeIdx, state, desc] : rsrcStates) {
+  const auto& rsrcStates = passNodeIdx2rsrcMap[passNodeIdx];
+  for (const auto& [rsrcNodeIdx, state_desc] : rsrcStates) {
+    auto&& [state, desc] = state_desc;
     auto& view = actives[rsrcNodeIdx];
     auto& handles = handleMap[rsrcNodeIdx];
 
@@ -574,9 +589,33 @@ PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
 
             return {pRsrc, info->cpuHandle, {0}};
           } else
-            static_assert(always_false_v<T>, "non-exhaustive visitor!");
+            static_assert(detail::always_false_v<T>, "non-exhaustive visitor!");
         },
         desc);
   }
   return passRsrc;
+}
+
+bool RsrcMngr::CheckComplete(const FrameGraph& fg) {
+  size_t rsrcNodeNum = fg.GetResourceNodes().size();
+  size_t passNodeNum = fg.GetPassNodes().size();
+
+  for (size_t i = 0; i < rsrcNodeNum; i++) {
+    if (importeds.find(i) == importeds.end() &&
+        temporals.find(i) == temporals.end())
+      return false;
+  }
+
+  for (size_t i = 0; i < passNodeNum; i++) {
+    auto target = passNodeIdx2rsrcMap.find(i);
+    if (target == passNodeIdx2rsrcMap.end())
+      return false;
+    const auto& passNode = fg.GetPassNodes().at(i);
+    for (auto rsrcNodeIdx : passNode.Inputs()) {
+      if (target->second.find(rsrcNodeIdx) == target->second.end())
+        return false;
+    }
+  }
+
+  return true;
 }
