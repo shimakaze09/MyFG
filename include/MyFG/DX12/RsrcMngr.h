@@ -10,19 +10,19 @@
 
 #include <unordered_set>
 
-namespace My::DX12::FG {
+namespace My::MyFG::DX12 {
 // manage per pass resources
 // CBV, SRV, UAV, RTV, DSV
 class RsrcMngr {
  public:
   ~RsrcMngr();
 
-  void Init(GCmdList uGCmdList, Device uDevice) {
+  void Init(MyDX12::GCmdList uGCmdList, MyDX12::Device uDevice) {
     this->uGCmdList = uGCmdList;
     this->uDevice = uDevice;
-    csuDynamicDH =
-        new DynamicSuballocMngr{*DescriptorHeapMngr::Instance().GetCSUGpuDH(),
-                                256, "RsrcMngr::csuDynamicDH"};
+    csuDynamicDH = new MyDX12::DynamicSuballocMngr{
+        *MyDX12::DescriptorHeapMngr::Instance().GetCSUGpuDH(), 256,
+        "RsrcMngr::csuDynamicDH"};
   }
 
   void NewFrame();
@@ -71,8 +71,8 @@ class RsrcMngr {
   void DsvDHReserve(UINT num);
   void RtvDHReserve(UINT num);
 
-  GCmdList uGCmdList;
-  Device uDevice;
+  MyDX12::GCmdList uGCmdList;
+  MyDX12::Device uDevice;
 
   // type -> vector<view>
   std::vector<RsrcPtr> rsrcKeeper;
@@ -130,19 +130,18 @@ class RsrcMngr {
   // rsrcNodeIdx -> type
   std::unordered_map<size_t, DHHandles> handleMap;
 
-  DynamicSuballocMngr* csuDynamicDH{nullptr};
+  MyDX12::DynamicSuballocMngr* csuDynamicDH{nullptr};
 
-  DescriptorHeapAllocation csuDH;
+  MyDX12::DescriptorHeapAllocation csuDH;
   std::vector<UINT> csuDHfree;
   std::unordered_set<UINT> csuDHused;
 
-  DescriptorHeapAllocation rtvDH;
+  MyDX12::DescriptorHeapAllocation rtvDH;
   std::vector<UINT> rtvDHfree;
   std::unordered_set<UINT> rtvDHused;
 
-  DescriptorHeapAllocation dsvDH;
+  MyDX12::DescriptorHeapAllocation dsvDH;
   std::vector<UINT> dsvDHfree;
   std::unordered_set<UINT> dsvDHused;
 };
-
-}  // namespace My::DX12::FG
+}  // namespace My::MyFG::DX12

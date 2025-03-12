@@ -4,12 +4,13 @@
 
 #include <MyFG/DX12/RsrcMngr.h>
 
-using namespace My::DX12;
+using namespace My::MyFG::DX12;
+using namespace My::MyDX12;
 using namespace std;
 
 #include <DirectXColors.h>
 
-FG::RsrcMngr::~RsrcMngr() {
+RsrcMngr::~RsrcMngr() {
   if (!csuDH.IsNull())
     DescriptorHeapMngr::Instance().GetCSUGpuDH()->Free(move(csuDH));
   if (!rtvDH.IsNull())
@@ -20,7 +21,7 @@ FG::RsrcMngr::~RsrcMngr() {
   delete csuDynamicDH;
 }
 
-void FG::RsrcMngr::NewFrame() {
+void RsrcMngr::NewFrame() {
   importeds.clear();
   temporals.clear();
   passNodeIdx2rsrcs.clear();
@@ -42,13 +43,13 @@ void FG::RsrcMngr::NewFrame() {
   handleMap.clear();
 }
 
-void FG::RsrcMngr::Clear() {
+void RsrcMngr::Clear() {
   NewFrame();
   rsrcKeeper.clear();
   pool.clear();
 }
 
-void FG::RsrcMngr::CSUDHReserve(UINT num) {
+void RsrcMngr::CSUDHReserve(UINT num) {
   assert(csuDHused.empty());
 
   UINT origSize = csuDH.GetNumHandles();
@@ -63,7 +64,7 @@ void FG::RsrcMngr::CSUDHReserve(UINT num) {
     csuDHfree.push_back(i);
 }
 
-void FG::RsrcMngr::RtvDHReserve(UINT num) {
+void RsrcMngr::RtvDHReserve(UINT num) {
   assert(rtvDHused.empty());
 
   UINT origSize = rtvDH.GetNumHandles();
@@ -78,7 +79,7 @@ void FG::RsrcMngr::RtvDHReserve(UINT num) {
     rtvDHfree.push_back(i);
 }
 
-void FG::RsrcMngr::DsvDHReserve(UINT num) {
+void RsrcMngr::DsvDHReserve(UINT num) {
   assert(dsvDHused.empty());
 
   UINT origSize = dsvDH.GetNumHandles();
@@ -93,7 +94,7 @@ void FG::RsrcMngr::DsvDHReserve(UINT num) {
     dsvDHfree.push_back(i);
 }
 
-void FG::RsrcMngr::DHReserve() {
+void RsrcMngr::DHReserve() {
   UINT numCSU = 0;
   UINT numRTV = 0;
   UINT numDSV = 0;
@@ -197,7 +198,7 @@ void FG::RsrcMngr::DHReserve() {
   DsvDHReserve(numDSV);
 }
 
-void FG::RsrcMngr::Construct(size_t rsrcNodeIdx) {
+void RsrcMngr::Construct(size_t rsrcNodeIdx) {
   SRsrcView view;
 
   if (IsImported(rsrcNodeIdx)) {
@@ -225,7 +226,7 @@ void FG::RsrcMngr::Construct(size_t rsrcNodeIdx) {
   actives[rsrcNodeIdx] = view;
 }
 
-void FG::RsrcMngr::Destruct(size_t rsrcNodeIdx) {
+void RsrcMngr::Destruct(size_t rsrcNodeIdx) {
   auto view = actives[rsrcNodeIdx];
   if (!IsImported(rsrcNodeIdx)) {
     pool[temporals[rsrcNodeIdx]].push_back(view);
@@ -240,10 +241,9 @@ void FG::RsrcMngr::Destruct(size_t rsrcNodeIdx) {
   actives.erase(rsrcNodeIdx);
 }
 
-FG::RsrcMngr& FG::RsrcMngr::RegisterRsrcHandle(
-    size_t rsrcNodeIdx, RsrcImplDesc desc,
-    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
-    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle) {
+RsrcMngr& RsrcMngr::RegisterRsrcHandle(size_t rsrcNodeIdx, RsrcImplDesc desc,
+                                       D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle,
+                                       D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle) {
   auto& handles = handleMap[rsrcNodeIdx];
   std::visit(
       [&](const auto& desc) {
@@ -292,7 +292,7 @@ FG::RsrcMngr& FG::RsrcMngr::RegisterRsrcHandle(
   return *this;
 }
 
-FG::RsrcMngr& FG::RsrcMngr::RegisterRsrcTable(
+RsrcMngr& RsrcMngr::RegisterRsrcTable(
     const std::vector<std::tuple<size_t, RsrcImplDesc>>& rsrcNodeIndices) {
   auto allocation =
       csuDynamicDH->Allocate(static_cast<uint32_t>(rsrcNodeIndices.size()));
@@ -334,7 +334,7 @@ FG::RsrcMngr& FG::RsrcMngr::RegisterRsrcTable(
   return *this;
 }
 
-void FG::RsrcMngr::AllocateHandle() {
+void RsrcMngr::AllocateHandle() {
   for (const auto& [passNodeIdx, rsrcs] : passNodeIdx2rsrcs) {
     for (const auto& [rsrcNodeIdx, state, desc] : rsrcs) {
       auto& handles = handleMap[rsrcNodeIdx];
@@ -445,7 +445,7 @@ void FG::RsrcMngr::AllocateHandle() {
   }
 }
 
-FG::PassRsrcs FG::RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
+PassRsrcs RsrcMngr::RequestPassRsrcs(size_t passNodeIdx) {
   PassRsrcs passRsrc;
   const auto& rsrcStates = passNodeIdx2rsrcs[passNodeIdx];
   for (const auto& [rsrcNodeIdx, state, desc] : rsrcStates) {

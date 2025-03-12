@@ -6,17 +6,17 @@
 
 #include <iostream>
 
-using namespace My;
 using namespace std;
+using namespace My;
 
 class ResourceMngr {
  public:
-  void Construct(const FG::FrameGraph& fg, size_t rsrcNodeIdx) {
+  void Construct(const MyFG::FrameGraph& fg, size_t rsrcNodeIdx) {
     cout << "[Construct] " << fg.GetResourceNodes().at(rsrcNodeIdx).Name()
          << endl;
   }
 
-  void Destruct(const FG::FrameGraph& fg, size_t rsrcNodeIdx) {
+  void Destruct(const MyFG::FrameGraph& fg, size_t rsrcNodeIdx) {
     cout << "[Destruct] " << fg.GetResourceNodes().at(rsrcNodeIdx).Name()
          << endl;
   }
@@ -24,8 +24,8 @@ class ResourceMngr {
 
 class Executor {
  public:
-  virtual void Execute(const FG::FrameGraph& fg,
-                       const FG::Compiler::Result& crst,
+  virtual void Execute(const MyFG::FrameGraph& fg,
+                       const MyFG::Compiler::Result& crst,
                        ResourceMngr& rsrcMngr) {
     const auto& passnodes = fg.GetPassNodes();
     for (auto i : crst.sortedPasses) {
@@ -43,22 +43,23 @@ class Executor {
 };
 
 int main() {
-  FG::FrameGraph fg;
-  fg.Name = "test 00 basic";
+  MyFG::FrameGraph fg("test 00 basic");
 
-  size_t depthbuffer = fg.AddResourceNode("Depth Buffer");
-  size_t gbuffer1 = fg.AddResourceNode("GBuffer1");
-  size_t gbuffer2 = fg.AddResourceNode("GBuffer2");
-  size_t gbuffer3 = fg.AddResourceNode("GBuffer3");
-  size_t lightingbuffer = fg.AddResourceNode("Lighting Buffer");
-  size_t finaltarget = fg.AddResourceNode("Final Target");
-  size_t debugoutput = fg.AddResourceNode("Debug Output");
+  size_t depthbuffer = fg.RegisterResourceNode("Depth Buffer");
+  size_t gbuffer1 = fg.RegisterResourceNode("GBuffer1");
+  size_t gbuffer2 = fg.RegisterResourceNode("GBuffer2");
+  size_t gbuffer3 = fg.RegisterResourceNode("GBuffer3");
+  size_t lightingbuffer = fg.RegisterResourceNode("Lighting Buffer");
+  size_t finaltarget = fg.RegisterResourceNode("Final Target");
+  size_t debugoutput = fg.RegisterResourceNode("Debug Output");
 
-  fg.AddPassNode("Depth pass", {}, {depthbuffer});
-  fg.AddPassNode("GBuffer pass", {depthbuffer}, {gbuffer1, gbuffer2, gbuffer3});
-  fg.AddPassNode("Lighting", {gbuffer1, gbuffer2, gbuffer3}, {lightingbuffer});
-  fg.AddPassNode("Post", {lightingbuffer}, {finaltarget});
-  fg.AddPassNode("Debug View", {gbuffer3}, {debugoutput});
+  fg.RegisterPassNode("Depth pass", {}, {depthbuffer});
+  fg.RegisterPassNode("GBuffer pass", {depthbuffer},
+                      {gbuffer1, gbuffer2, gbuffer3});
+  fg.RegisterPassNode("Lighting", {gbuffer1, gbuffer2, gbuffer3},
+                      {lightingbuffer});
+  fg.RegisterPassNode("Post", {lightingbuffer}, {finaltarget});
+  fg.RegisterPassNode("Debug View", {gbuffer3}, {debugoutput});
 
   cout << "------------------------[frame graph]------------------------"
        << endl;
@@ -69,7 +70,7 @@ int main() {
   for (size_t i = 0; i < fg.GetPassNodes().size(); i++)
     cout << "- " << i << " : " << fg.GetPassNodes().at(i).Name() << endl;
 
-  FG::Compiler compiler;
+  MyFG::Compiler compiler;
 
   auto [success, crst] = compiler.Compile(fg);
 

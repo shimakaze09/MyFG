@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace My::FG {
+namespace My::MyFG {
 class PassNode {
  public:
   PassNode(std::string name, std::vector<size_t> inputs,
@@ -27,4 +27,4 @@ class PassNode {
   std::vector<size_t> inputs;
   std::vector<size_t> outputs;
 };
-}  // namespace My::FG
+}  // namespace My::MyFG

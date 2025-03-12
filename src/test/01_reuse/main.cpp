@@ -39,14 +39,14 @@ class ResourceMngr {
     }
   }
 
-  void Construct(const string& name, size_t rsrcNodeIdx) {
+  void Construct(const string& name, size_t rsrcNodeIndex) {
     Resource rsrc;
 
-    if (IsImported(rsrcNodeIdx)) {
-      rsrc = importeds[rsrcNodeIdx];
+    if (IsImported(rsrcNodeIndex)) {
+      rsrc = importeds[rsrcNodeIndex];
       cout << "[Construct] Import | " << name << " @" << rsrc.buffer << endl;
     } else {
-      auto type = temporals[rsrcNodeIdx];
+      auto type = temporals[rsrcNodeIndex];
       auto& typefrees = pool[type];
       if (typefrees.empty()) {
         rsrc.buffer = new float[type.size];
@@ -57,49 +57,49 @@ class ResourceMngr {
         cout << "[Construct] Init | " << name << " @" << rsrc.buffer << endl;
       }
     }
-    actives[rsrcNodeIdx] = rsrc;
+    actives[rsrcNodeIndex] = rsrc;
   }
 
-  void Destruct(const string& name, size_t rsrcNodeIdx) {
-    auto rsrc = actives[rsrcNodeIdx];
-    if (!IsImported(rsrcNodeIdx)) {
-      pool[temporals[rsrcNodeIdx]].push_back(actives[rsrcNodeIdx]);
+  void Destruct(const string& name, size_t rsrcNodeIndex) {
+    auto rsrc = actives[rsrcNodeIndex];
+    if (!IsImported(rsrcNodeIndex)) {
+      pool[temporals[rsrcNodeIndex]].push_back(actives[rsrcNodeIndex]);
       cout << "[Destruct] Recycle | " << name << " @" << rsrc.buffer << endl;
     } else
       cout << "[Destruct] Import | " << name << " @" << rsrc.buffer << endl;
 
-    actives.erase(rsrcNodeIdx);
+    actives.erase(rsrcNodeIndex);
   }
 
-  ResourceMngr& RegisterImportedRsrc(size_t rsrcNodeIdx, Resource rsrc) {
-    importeds[rsrcNodeIdx] = rsrc;
+  ResourceMngr& RegisterImportedRsrc(size_t rsrcNodeIndex, Resource rsrc) {
+    importeds[rsrcNodeIndex] = rsrc;
     return *this;
   }
 
-  ResourceMngr& RegisterTemporalRsrc(size_t rsrcNodeIdx, RsrcType type) {
-    temporals[rsrcNodeIdx] = type;
+  ResourceMngr& RegisterTemporalRsrc(size_t rsrcNodeIndex, RsrcType type) {
+    temporals[rsrcNodeIndex] = type;
     return *this;
   }
 
-  bool IsImported(size_t rsrcNodeIdx) const noexcept {
-    return importeds.find(rsrcNodeIdx) != importeds.end();
+  bool IsImported(size_t rsrcNodeIndex) const noexcept {
+    return importeds.find(rsrcNodeIndex) != importeds.end();
   }
 
  private:
-  // rsrcNodeIdx -> rsrc
+  // rsrcNodeIndex -> rsrc
   std::unordered_map<size_t, Resource> importeds;
-  // rsrcNodeIdx -> type
+  // rsrcNodeIndex -> type
   std::unordered_map<size_t, RsrcType> temporals;
   // type -> vector<rsrc>
   std::unordered_map<RsrcType, std::vector<Resource>> pool;
-  // rsrcNodeIdx -> rsrc
+  // rsrcNodeIndex -> rsrc
   std::unordered_map<size_t, Resource> actives;
 };
 
 class Executor {
  public:
-  virtual void Execute(const FG::FrameGraph& fg,
-                       const FG::Compiler::Result& crst,
+  virtual void Execute(const MyFG::FrameGraph& fg,
+                       const MyFG::Compiler::Result& crst,
                        ResourceMngr& rsrcMngr) {
     const auto& passnodes = fg.GetPassNodes();
     for (auto i : crst.sortedPasses) {
@@ -117,22 +117,23 @@ class Executor {
 };
 
 int main() {
-  FG::FrameGraph fg;
+  MyFG::FrameGraph fg("test 00 basic");
 
-  size_t depthbuffer = fg.AddResourceNode("Depth Buffer");
-  size_t gbuffer1 = fg.AddResourceNode("GBuffer1");
-  size_t gbuffer2 = fg.AddResourceNode("GBuffer2");
-  size_t gbuffer3 = fg.AddResourceNode("GBuffer3");
-  size_t lightingbuffer = fg.AddResourceNode("Lighting Buffer");
-  size_t finaltarget = fg.AddResourceNode("Final Target");
-  size_t debugoutput = fg.AddResourceNode("Debug Output");
+  size_t depthbuffer = fg.RegisterResourceNode("Depth Buffer");
+  size_t gbuffer1 = fg.RegisterResourceNode("GBuffer1");
+  size_t gbuffer2 = fg.RegisterResourceNode("GBuffer2");
+  size_t gbuffer3 = fg.RegisterResourceNode("GBuffer3");
+  size_t lightingbuffer = fg.RegisterResourceNode("Lighting Buffer");
+  size_t finaltarget = fg.RegisterResourceNode("Final Target");
+  size_t debugoutput = fg.RegisterResourceNode("Debug Output");
 
-  fg.AddPassNode("Depth pass", {}, {depthbuffer});
-  fg.AddPassNode("GBuffer pass", {depthbuffer}, {gbuffer1, gbuffer2, gbuffer3});
-  fg.AddPassNode("Lighting", {depthbuffer, gbuffer1, gbuffer2, gbuffer3},
-                 {lightingbuffer});
-  fg.AddPassNode("Post", {lightingbuffer}, {finaltarget});
-  fg.AddPassNode("Debug View", {gbuffer3}, {debugoutput});
+  fg.RegisterPassNode("Depth pass", {}, {depthbuffer});
+  fg.RegisterPassNode("GBuffer pass", {depthbuffer},
+                      {gbuffer1, gbuffer2, gbuffer3});
+  fg.RegisterPassNode("Lighting", {depthbuffer, gbuffer1, gbuffer2, gbuffer3},
+                      {lightingbuffer});
+  fg.RegisterPassNode("Post", {lightingbuffer}, {finaltarget});
+  fg.RegisterPassNode("Debug View", {gbuffer3}, {debugoutput});
 
   cout << "------------------------[frame graph]------------------------"
        << endl;
@@ -143,7 +144,7 @@ int main() {
   for (size_t i = 0; i < fg.GetPassNodes().size(); i++)
     cout << "- " << i << " : " << fg.GetPassNodes().at(i).Name() << endl;
 
-  FG::Compiler compiler;
+  MyFG::Compiler compiler;
 
   auto [success, crst] = compiler.Compile(fg);
 

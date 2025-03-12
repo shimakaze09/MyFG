@@ -11,7 +11,7 @@
 
 using namespace My;
 
-using namespace My::FG;
+using namespace My::MyFG;
 using namespace std;
 
 tuple<bool, vector<size_t>> Compiler::Result::PassGraph::TopoSort() const {

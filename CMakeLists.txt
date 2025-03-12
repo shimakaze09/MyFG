@@ -8,12 +8,12 @@ INIT_MYCMAKE()
 
 INIT_PROJECT()
 
-ADD_DEP(MyGraphviz 0.1.0)
+ADD_DEP(MyGraphviz 0.1.4)
 
 SET(MyFG_BUILD_DX12 TRUE CACHE BOOL "Build Frame Graph for DirectX 12")
 
 IF (MyFG_BUILD_DX12)
-    ADD_DEP(MyDX12 0.0.3)
+    ADD_DEP(MyDX12 0.0.5)
 ENDIF ()
 
 ADD_SUB_DIRS_REC(src)

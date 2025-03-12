@@ -6,7 +6,7 @@
 
 #include <string>
 
-namespace My::FG {
+namespace My::MyFG {
 class ResourceNode {
  public:
   ResourceNode(std::string name) : name{std::move(name)} {}
@@ -16,4 +16,4 @@ class ResourceNode {
  private:
   std::string name;
 };
-}  // namespace My::FG
+}  // namespace My::MyFG

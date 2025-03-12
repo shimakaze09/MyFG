@@ -9,51 +9,52 @@
 
 #include <MyGraphviz/MyGraphviz.h>
 
-#include <unordered_map>
+#include <map>
 
-namespace My::FG {
+namespace My::MyFG {
 // add all resource nodes first
 // then add pass nodes
 class FrameGraph {
  public:
-  std::string Name;
+  FrameGraph(std::string name) : name{std::move(name)} {}
 
-  size_t AddResourceNode(std::string name);
+  const std::string& Name() const noexcept { return name; }
 
-  size_t AddPassNode(std::string name, std::vector<size_t> inputs,
-                     std::vector<size_t> outputs);
-
-  template <size_t N, size_t M>
-  size_t AddPassNode(std::string name,
-                     const std::array<std::string, N>& inputs_str,
-                     const std::array<std::string, M>& outputs_str);
-
-  size_t GetResourceNodeIndex(const std::string& name) const noexcept {
-    return rsrcname2idx.find(name)->second;
-  }
-
-  size_t GetPassNodeIndex(const std::string& name) const noexcept {
-    return passnodename2idx.find(name)->second;
+  const std::vector<ResourceNode>& GetResourceNodes() const noexcept {
+    return resourceNodes;
   }
 
   const std::vector<PassNode>& GetPassNodes() const noexcept {
     return passNodes;
   }
 
-  const std::vector<ResourceNode>& GetResourceNodes() const noexcept {
-    return rsrcNodes;
-  }
+  bool IsRegisteredResourceNode(std::string_view name) const;
+  bool IsRegisteredPassNode(std::string_view name) const;
 
-  void Clear();
+  size_t GetResourceNodeIndex(std::string_view name) const;
+  size_t GetPassNodeIndex(std::string_view name) const;
 
-  Graphviz::Graph ToGraphvizGraph() const;
+  size_t RegisterResourceNode(ResourceNode node);
+  size_t RegisterResourceNode(std::string node);
+  size_t RegisterPassNode(PassNode node);
+  size_t RegisterPassNode(std::string name, std::vector<size_t> inputs,
+                          std::vector<size_t> outputs);
+  template <size_t N, size_t M>
+  size_t RegisterPassNode(std::string name,
+                          const std::array<std::string_view, N>& inputs_str,
+                          const std::array<std::string_view, M>& outputs_str);
+
+  void Clear() noexcept;
+
+  MyGraphviz::Graph ToGraphvizGraph() const;
 
  private:
-  std::unordered_map<std::string, size_t> rsrcname2idx;
-  std::unordered_map<std::string, size_t> passnodename2idx;
-  std::vector<ResourceNode> rsrcNodes;
+  std::string name;
+  std::vector<ResourceNode> resourceNodes;
   std::vector<PassNode> passNodes;
+  std::map<std::string, size_t, std::less<>> name2rsrcNodeIdx;
+  std::map<std::string, size_t, std::less<>> name2passNodeIdx;
 };
-}  // namespace My::FG
+}  // namespace My::MyFG
 
 #include "detail/FrameGraph.inl"

@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <variant>
 
-namespace My::detail::DX12::FG::Rsrc_ {
+namespace My::MyFG::DX12::detail {
 template <typename T>
 void hash_combine(size_t& s, const T& v) {
   std::hash<T> h;
@@ -55,25 +55,25 @@ bool bitwise_equal(const T& lhs, const T& rhs) noexcept {
 
   return true;
 }
-}  // namespace My::detail::DX12::FG::Rsrc_
+}  // namespace My::MyFG::DX12::detail
 
-namespace My::DX12::FG {
+namespace My::MyFG::DX12 {
 using Rsrc = ID3D12Resource;
-using RsrcPtr = ComPtr<Rsrc>;
+using RsrcPtr = MyDX12::ComPtr<Rsrc>;
 using RsrcState = D3D12_RESOURCE_STATES;
 
 struct RsrcType {
   D3D12_CLEAR_VALUE clearValue;
   D3D12_RESOURCE_DESC desc;
 
-  bool operator==(const My::DX12::FG::RsrcType& rhs) const noexcept {
-    return My::detail::DX12::FG::Rsrc_::bitwise_equal(*this, rhs);
+  bool operator==(const RsrcType& rhs) const noexcept {
+    return detail::bitwise_equal(*this, rhs);
   }
 
   static RsrcType RT2D(DXGI_FORMAT format, UINT64 width, UINT height,
                        const float* color) {
     return {CD3DX12_CLEAR_VALUE{format, color},
-            My::DX12::Desc::RSRC::RT2D(width, height, format)};
+            My::MyDX12::Desc::RSRC::RT2D(width, height, format)};
   }
 };
 
@@ -103,38 +103,38 @@ struct SRsrcView {
   Rsrc* pRsrc;
   RsrcState state;
 };
-}  // namespace My::DX12::FG
+}  // namespace My::MyFG::DX12
 
 inline bool operator==(const D3D12_CONSTANT_BUFFER_VIEW_DESC& lhs,
                        const D3D12_CONSTANT_BUFFER_VIEW_DESC& rhs) noexcept {
-  return My::detail::DX12::FG::Rsrc_::bitwise_equal(lhs, rhs);
+  return My::MyFG::DX12::detail::bitwise_equal(lhs, rhs);
 }
 
 inline bool operator==(const D3D12_SHADER_RESOURCE_VIEW_DESC& lhs,
                        const D3D12_SHADER_RESOURCE_VIEW_DESC& rhs) noexcept {
-  return My::detail::DX12::FG::Rsrc_::bitwise_equal(lhs, rhs);
+  return My::MyFG::DX12::detail::bitwise_equal(lhs, rhs);
 }
 
 inline bool operator==(const D3D12_UNORDERED_ACCESS_VIEW_DESC& lhs,
                        const D3D12_UNORDERED_ACCESS_VIEW_DESC& rhs) noexcept {
-  return My::detail::DX12::FG::Rsrc_::bitwise_equal(lhs, rhs);
+  return My::MyFG::DX12::detail::bitwise_equal(lhs, rhs);
 }
 
 inline bool operator==(const D3D12_RENDER_TARGET_VIEW_DESC& lhs,
                        const D3D12_RENDER_TARGET_VIEW_DESC& rhs) noexcept {
-  return My::detail::DX12::FG::Rsrc_::bitwise_equal(lhs, rhs);
+  return My::MyFG::DX12::detail::bitwise_equal(lhs, rhs);
 }
 
 inline bool operator==(const D3D12_DEPTH_STENCIL_VIEW_DESC& lhs,
                        const D3D12_DEPTH_STENCIL_VIEW_DESC& rhs) noexcept {
-  return My::detail::DX12::FG::Rsrc_::bitwise_equal(lhs, rhs);
+  return My::MyFG::DX12::detail::bitwise_equal(lhs, rhs);
 }
 
 namespace std {
 template <>
-struct hash<My::DX12::FG::RsrcType> {
-  size_t operator()(const My::DX12::FG::RsrcType& type) const noexcept {
-    return My::detail::DX12::FG::Rsrc_::hash_of(type);
+struct hash<My::MyFG::DX12::RsrcType> {
+  size_t operator()(const My::MyFG::DX12::RsrcType& type) const noexcept {
+    return My::MyFG::DX12::detail::hash_of(type);
   }
 };
 
@@ -142,7 +142,7 @@ template <>
 struct hash<D3D12_CONSTANT_BUFFER_VIEW_DESC> {
   size_t operator()(
       const D3D12_CONSTANT_BUFFER_VIEW_DESC& desc) const noexcept {
-    return My::detail::DX12::FG::Rsrc_::hash_of(desc);
+    return My::MyFG::DX12::detail::hash_of(desc);
   }
 };
 
@@ -150,7 +150,7 @@ template <>
 struct hash<D3D12_SHADER_RESOURCE_VIEW_DESC> {
   size_t operator()(
       const D3D12_SHADER_RESOURCE_VIEW_DESC& desc) const noexcept {
-    return My::detail::DX12::FG::Rsrc_::hash_of(desc);
+    return My::MyFG::DX12::detail::hash_of(desc);
   }
 };
 
@@ -158,21 +158,21 @@ template <>
 struct hash<D3D12_UNORDERED_ACCESS_VIEW_DESC> {
   size_t operator()(
       const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc) const noexcept {
-    return My::detail::DX12::FG::Rsrc_::hash_of(desc);
+    return My::MyFG::DX12::detail::hash_of(desc);
   }
 };
 
 template <>
 struct hash<D3D12_RENDER_TARGET_VIEW_DESC> {
   size_t operator()(const D3D12_RENDER_TARGET_VIEW_DESC& desc) const noexcept {
-    return My::detail::DX12::FG::Rsrc_::hash_of(desc);
+    return My::MyFG::DX12::detail::hash_of(desc);
   }
 };
 
 template <>
 struct hash<D3D12_DEPTH_STENCIL_VIEW_DESC> {
   size_t operator()(const D3D12_DEPTH_STENCIL_VIEW_DESC& desc) const noexcept {
-    return My::detail::DX12::FG::Rsrc_::hash_of(desc);
+    return My::MyFG::DX12::detail::hash_of(desc);
   }
 };
 }  // namespace std

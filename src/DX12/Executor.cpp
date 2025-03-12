@@ -4,12 +4,11 @@
 
 #include <MyFG/DX12/Executor.h>
 
- #include <MyFG/DX12/RsrcMngr.h>
+#include <MyFG/DX12/RsrcMngr.h>
 
- using namespace My::DX12;
+using namespace My::MyFG;
 
-void FG::Executor::Execute(const My::FG::Compiler::Result& crst, RsrcMngr& rsrcMngr)
-{
+void DX12::Executor::Execute(const Compiler::Result& crst, RsrcMngr& rsrcMngr) {
   rsrcMngr.DHReserve();
   rsrcMngr.AllocateHandle();
   for (auto passNodeIdx : crst.sortedPasses) {

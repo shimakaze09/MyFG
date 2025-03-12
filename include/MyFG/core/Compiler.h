@@ -9,7 +9,7 @@
 #include <set>
 #include <unordered_map>
 
-namespace My::FG {
+namespace My::MyFG {
 class Compiler {
  public:
   struct Result {
