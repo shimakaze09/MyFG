@@ -1,13 +1,9 @@
-//
-// Created by Admin on 7/03/2025.
-//
-
 #pragma once
-
-#include "FrameGraph.h"
 
 #include <set>
 #include <unordered_map>
+
+#include "FrameGraph.hpp"
 
 namespace My::MyFG {
 class Compiler {
@@ -29,10 +25,9 @@ class Compiler {
 
     struct PassGraph {
       void Clear() { adjList.clear(); }
-
       std::tuple<bool, std::vector<size_t>> TopoSort() const;
       std::unordered_map<size_t, std::set<size_t>> adjList;
-      MyGraphviz::Graph ToGraphvizGraph(const FrameGraph& fg) const;
+      UGraphviz::Graph ToGraphvizGraph(const FrameGraph& fg) const;
     };
 
     std::unordered_map<size_t, RsrcInfo> rsrc2info;

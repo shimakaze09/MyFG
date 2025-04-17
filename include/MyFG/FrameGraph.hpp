@@ -1,17 +1,12 @@
-//
-// Created by Admin on 7/03/2025.
-//
-
 #pragma once
 
-#include "MoveNode.h"
-#include "PassNode.h"
-#include "ResourceNode.h"
-
-#include <MyGraphviz/MyGraphviz.h>
-
+#include <UGraphviz/UGraphviz.hpp>
 #include <map>
 #include <unordered_map>
+
+#include "MoveNode.hpp"
+#include "PassNode.hpp"
+#include "ResourceNode.hpp"
 
 namespace My::MyFG {
 // 1. Add all resource nodes first, then add pass nodes
@@ -26,11 +21,9 @@ class FrameGraph {
   const std::vector<ResourceNode>& GetResourceNodes() const noexcept {
     return resourceNodes;
   }
-
   const std::vector<PassNode>& GetPassNodes() const noexcept {
     return passNodes;
   }
-
   const std::vector<MoveNode>& GetMoveNodes() const noexcept {
     return moveNodes;
   }
@@ -61,7 +54,7 @@ class FrameGraph {
 
   void Clear() noexcept;
 
-  MyGraphviz::Graph ToGraphvizGraph() const;
+  UGraphviz::Graph ToGraphvizGraph() const;
 
  private:
   std::string name;

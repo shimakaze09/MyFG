@@ -1,7 +1,3 @@
-//
-// Created by Admin on 7/03/2025.
-//
-
 #pragma once
 
 #include <string>
@@ -17,9 +13,7 @@ class PassNode {
         outputs{std::move(outputs)} {}
 
   const std::string& Name() const noexcept { return name; }
-
   const std::vector<size_t>& Inputs() const noexcept { return inputs; }
-
   const std::vector<size_t>& Outputs() const noexcept { return outputs; }
 
  private:
