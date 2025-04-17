@@ -1,6 +1,6 @@
 #pragma once
 
-#include <UGraphviz/UGraphviz.hpp>
+#include <MyGraphviz/MyGraphviz.hpp>
 #include <map>
 #include <unordered_map>
 
@@ -54,7 +54,7 @@ class FrameGraph {
 
   void Clear() noexcept;
 
-  UGraphviz::Graph ToGraphvizGraph() const;
+  MyGraphviz::Graph ToGraphvizGraph() const;
 
  private:
   std::string name;
