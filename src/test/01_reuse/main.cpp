@@ -1,9 +1,4 @@
-//
-// Created by Admin on 7/03/2025.
-//
-
-#include <MyFG/MyFG.h>
-
+#include <MyFG/MyFG.hpp>
 #include <iostream>
 
 using namespace std;
@@ -34,8 +29,7 @@ class ResourceMngr {
  public:
   ~ResourceMngr() {
     for (const auto& [type, rsrcs] : pool) {
-      for (auto rsrc : rsrcs)
-        delete[] rsrc.buffer;
+      for (auto rsrc : rsrcs) delete[] rsrc.buffer;
     }
   }
 

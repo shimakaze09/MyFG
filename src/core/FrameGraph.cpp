@@ -1,8 +1,4 @@
-//
-// Created by Admin on 8/03/2025.
-//
-
-#include <MyFG/FrameGraph.h>
+#include <MyFG/FrameGraph.hpp>
 
 #include <cassert>
 

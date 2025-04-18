@@ -1,9 +1,4 @@
-//
-// Created by Admin on 7/03/2025.
-//
-
-#include <MyFG/MyFG.h>
-
+#include <MyFG/MyFG.hpp>
 #include <iostream>
 
 using namespace std;

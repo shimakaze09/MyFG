@@ -1,10 +1,6 @@
-//
-// Created by Admin on 7/03/2025.
-//
+#include <MyFG/Compiler.hpp>
 
-#include <MyFG/Compiler.h>
-
-#include <MyFG/ResourceNode.h>
+#include <MyFG/ResourceNode.hpp>
 
 #include <algorithm>
 #include <cassert>
