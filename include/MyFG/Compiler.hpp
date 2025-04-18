@@ -5,7 +5,7 @@
 
 #include "FrameGraph.hpp"
 
-namespace My::MyFG {
+namespace Smkz::MyFG {
 class Compiler {
  public:
   struct Result {
@@ -40,4 +40,4 @@ class Compiler {
 
   std::tuple<bool, Result> Compile(const FrameGraph& fg);
 };
-}  // namespace My::MyFG
+}  // namespace Smkz::MyFG

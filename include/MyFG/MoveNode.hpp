@@ -1,6 +1,6 @@
 #pragma once
 
-namespace My::MyFG {
+namespace Smkz::MyFG {
 class MoveNode {
  public:
   MoveNode(size_t dst, size_t src) : dst{dst}, src{src} {}
@@ -14,4 +14,4 @@ class MoveNode {
   size_t dst;
   size_t src;
 };
-}  // namespace My::MyFG
+}  // namespace Smkz::MyFG

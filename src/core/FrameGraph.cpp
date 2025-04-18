@@ -1,9 +1,8 @@
 #include <MyFG/FrameGraph.hpp>
-
 #include <cassert>
 
-using namespace My;
-using namespace My::MyFG;
+using namespace Smkz;
+using namespace Smkz::MyFG;
 
 bool FrameGraph::IsRegisteredResourceNode(std::string_view name) const {
   return name2rsrcNodeIdx.find(name) != name2rsrcNodeIdx.end();
@@ -52,8 +51,7 @@ size_t FrameGraph::RegisterPassNode(std::string name,
 
 bool FrameGraph::IsRegisteredMoveNode(size_t dst, size_t src) const {
   auto target = srcRsrcNodeIdx2moveNodeIdx.find(src);
-  if (target == srcRsrcNodeIdx2moveNodeIdx.end())
-    return false;
+  if (target == srcRsrcNodeIdx2moveNodeIdx.end()) return false;
   size_t idx = target->second;
   return moveNodes[idx].GetDestinationNodeIndex() == dst;
 }

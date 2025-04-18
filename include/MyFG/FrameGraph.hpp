@@ -8,7 +8,7 @@
 #include "PassNode.hpp"
 #include "ResourceNode.hpp"
 
-namespace My::MyFG {
+namespace Smkz::MyFG {
 // 1. Add all resource nodes first, then add pass nodes
 // 2. write means (read + write)
 // 3. resource lifecycle: move in -> write -> reads -> move out
@@ -66,6 +66,6 @@ class FrameGraph {
   std::unordered_map<size_t, size_t> srcRsrcNodeIdx2moveNodeIdx;
   std::unordered_map<size_t, size_t> dstRsrcNodeIdx2moveNodeIdx;
 };
-}  // namespace My::MyFG
+}  // namespace Smkz::MyFG
 
 #include "detail/FrameGraph.inl"

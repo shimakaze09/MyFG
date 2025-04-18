@@ -2,7 +2,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace My;
+using namespace Smkz;
 
 struct RsrcType {
   size_t size;

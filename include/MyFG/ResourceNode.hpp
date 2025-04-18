@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace My::MyFG {
+namespace Smkz::MyFG {
 class ResourceNode {
  public:
   ResourceNode(std::string name) : name{std::move(name)} {}
@@ -12,4 +12,4 @@ class ResourceNode {
  private:
   std::string name;
 };
-}  // namespace My::MyFG
+}  // namespace Smkz::MyFG
