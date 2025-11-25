@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Smkz::MyFG {
+namespace My::MyFG {
 class MoveNode {
  public:
   MoveNode(size_t dst, size_t src) : dst{dst}, src{src} {}
@@ -8,10 +8,11 @@ class MoveNode {
   static constexpr const char name[] = "Move";
 
   const size_t& GetDestinationNodeIndex() const noexcept { return dst; }
+
   const size_t& GetSourceNodeIndex() const noexcept { return src; }
 
  private:
   size_t dst;
   size_t src;
 };
-}  // namespace Smkz::MyFG
+}  // namespace My::MyFG

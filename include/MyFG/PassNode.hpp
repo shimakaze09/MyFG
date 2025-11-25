@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace Smkz::MyFG {
+namespace My::MyFG {
 class PassNode {
  public:
   PassNode(std::string name, std::vector<size_t> inputs,
@@ -13,7 +13,9 @@ class PassNode {
         outputs{std::move(outputs)} {}
 
   const std::string& Name() const noexcept { return name; }
+
   const std::vector<size_t>& Inputs() const noexcept { return inputs; }
+
   const std::vector<size_t>& Outputs() const noexcept { return outputs; }
 
  private:
@@ -21,4 +23,4 @@ class PassNode {
   std::vector<size_t> inputs;
   std::vector<size_t> outputs;
 };
-}  // namespace Smkz::MyFG
+}  // namespace My::MyFG

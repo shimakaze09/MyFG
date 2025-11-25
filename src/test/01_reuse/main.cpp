@@ -2,7 +2,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace Smkz;
+using namespace My;
 
 struct RsrcType {
   size_t size;
@@ -29,7 +29,8 @@ class ResourceMngr {
  public:
   ~ResourceMngr() {
     for (const auto& [type, rsrcs] : pool) {
-      for (auto rsrc : rsrcs) delete[] rsrc.buffer;
+      for (auto rsrc : rsrcs)
+        delete[] rsrc.buffer;
     }
   }
 

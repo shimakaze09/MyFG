@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Smkz::MyFG {
+namespace My::MyFG {
 template <size_t N, size_t M>
 size_t FrameGraph::RegisterPassNode(
     std::string name, const std::array<std::string_view, N>& inputs_str,
@@ -13,7 +13,7 @@ size_t FrameGraph::RegisterPassNode(
   for (size_t i = 0; i < M; i++)
     outputs[i] = GetResourceNodeIndex(outputs_str[i]);
 
-  return RegisterPassNode(std::move(name), std::move(inputs),
-                          std::move(outputs));
+  return RegisterPassNode(name, inputs, outputs);
 }
-}  // namespace Smkz::MyFG
+
+}  // namespace My::MyFG

@@ -5,7 +5,7 @@
 
 #include "FrameGraph.hpp"
 
-namespace Smkz::MyFG {
+namespace My::MyFG {
 class Compiler {
  public:
   struct Result {
@@ -25,6 +25,7 @@ class Compiler {
 
     struct PassGraph {
       void Clear() { adjList.clear(); }
+
       std::tuple<bool, std::vector<size_t>> TopoSort() const;
       std::unordered_map<size_t, std::set<size_t>> adjList;
       MyGraphviz::Graph ToGraphvizGraph(const FrameGraph& fg) const;
@@ -40,4 +41,4 @@ class Compiler {
 
   std::tuple<bool, Result> Compile(const FrameGraph& fg);
 };
-}  // namespace Smkz::MyFG
+}  // namespace My::MyFG

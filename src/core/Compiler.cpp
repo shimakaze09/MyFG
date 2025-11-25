@@ -4,8 +4,8 @@
 #include <cassert>
 #include <stack>
 
-using namespace Smkz;
-using namespace Smkz::MyFG;
+using namespace My;
+using namespace My::MyFG;
 using namespace std;
 
 tuple<bool, vector<size_t>> Compiler::Result::PassGraph::TopoSort() const {
@@ -15,14 +15,16 @@ tuple<bool, vector<size_t>> Compiler::Result::PassGraph::TopoSort() const {
     in_degree_map.emplace(parent, 0);
 
   for (const auto& [parent, children] : adjList) {
-    for (const auto& child : children) in_degree_map[child] += 1;
+    for (const auto& child : children)
+      in_degree_map[child] += 1;
   }
 
   stack<size_t> zero_in_degree_vertices;
   vector<size_t> sorted_vertices;
 
   for (const auto& [v, d] : in_degree_map) {
-    if (d == 0) zero_in_degree_vertices.push(v);
+    if (d == 0)
+      zero_in_degree_vertices.push(v);
   }
 
   while (!zero_in_degree_vertices.empty()) {
@@ -32,13 +34,16 @@ tuple<bool, vector<size_t>> Compiler::Result::PassGraph::TopoSort() const {
     in_degree_map.erase(v);
     for (auto child : adjList.find(v)->second) {
       auto target = in_degree_map.find(child);
-      if (target == in_degree_map.end()) continue;
+      if (target == in_degree_map.end())
+        continue;
       target->second--;
-      if (target->second == 0) zero_in_degree_vertices.push(child);
+      if (target->second == 0)
+        zero_in_degree_vertices.push(child);
     }
   }
 
-  if (!in_degree_map.empty()) return {false, vector<size_t>{}};
+  if (!in_degree_map.empty())
+    return {false, vector<size_t>{}};
 
   return {true, sorted_vertices};
 }
@@ -53,7 +58,8 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
     const auto& pass = passes[i];
     for (const auto& input : pass.Inputs())
       rst.rsrc2info[input].readers.push_back(i);
-    for (const auto& output : pass.Outputs()) rst.rsrc2info[output].writer = i;
+    for (const auto& output : pass.Outputs())
+      rst.rsrc2info[output].writer = i;
   }
 
   for (const auto& moveNode : fg.GetMoveNodes()) {
@@ -78,12 +84,14 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
     auto next = rst.moves_src2dst.find(dst);
     if (info.writer == static_cast<size_t>(-1) && info.readers.empty() &&
         next != rst.moves_src2dst.end()) {
+      auto old_dst = dst;
       dst = next->second;
-      deleteMoves.insert(dst);
+      deleteMoves.insert(old_dst);
     } else
       ++iter;
   }
-  for (auto idx : deleteMoves) rst.moves_src2dst.erase(idx);
+  for (auto idx : deleteMoves)
+    rst.moves_src2dst.erase(idx);
 
   // move_src2dst -> move_dst2src
   for (const auto& [src, dst] : rst.moves_src2dst) {
@@ -100,10 +108,12 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
   for (const auto& [name, info] : rst.rsrc2info) {
     /*if (info.writer == static_cast<size_t>(-1) && info.readers.size() == 0)
                         return { false, {} };*/
-    if (info.writer == static_cast<size_t>(-1)) continue;
+    if (info.writer == static_cast<size_t>(-1))
+      continue;
 
     auto& adj = rst.passgraph.adjList[info.writer];
-    for (const auto& reader : info.readers) adj.insert(reader);
+    for (const auto& reader : info.readers)
+      adj.insert(reader);
   }
 
   // move order
@@ -134,7 +144,8 @@ tuple<bool, Compiler::Result> Compiler::Compile(const FrameGraph& fg) {
 
   // sortedPasses : order -> index
   auto [success, sortedPasses] = rst.passgraph.TopoSort();
-  if (!success) return {false, {}};
+  if (!success)
+    return {false, {}};
 
   vector<size_t> index2order(sortedPasses.size());
   for (size_t i = 0; i < sortedPasses.size(); i++)
